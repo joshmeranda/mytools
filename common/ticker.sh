@@ -1,3 +1,5 @@
 #!/usr/bin/bash
 
-while true; do date; sleep 5; done
+INTERVAL=${INTERVAL:=5}
+
+while true; do date; sleep $INTERVAL; done
