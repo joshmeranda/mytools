@@ -5,7 +5,7 @@ import pytest
 from datetime import datetime
 
 _IGNORE_TIMEOUT: int = 30
-_IGNORE_PATH: str = os.path.abspath("../ignore.sh")
+_IGNORE_PATH: str = os.path.abspath("common/ignore.sh")
 
 _ENV_GITIGNORE_REPO_ROOT = "GITIGNORE_REPO_ROOT"
 _ENV_GITIGNORE_PATH = "GITIGNORE_PATH"
@@ -40,7 +40,8 @@ class TestIgnoreTarget:
 			args=[_IGNORE_PATH, "target"],
 			env={
 				_ENV_GITIGNORE_REPO_ROOT: str(tmp_path),
-			},			capture_output=True,
+			},
+			capture_output=True,
 			timeout=_IGNORE_TIMEOUT
 		)
 
