@@ -180,22 +180,25 @@ Args:
 			fi
 
 			until [[ $answer =~ [ynYN] ]]; do
-				read -n 1 -p "delete '$repo_dir'? [N|y]" answer
+				read -n 1 -p "delete '$owner/$repo'? [N|y]" answer
 
 				if [ -z $answer ]; then
 					answer=N
+				else
+					echo
 				fi
-
-				echo $answer
 			done
 
 			if [[ $answer =~ [yY] ]]; then
-				pushd "$repo_dir"
-				if [ -z "$(git status --porcelain)" ]; then
-					popd
-					continue
+				# todo: check if ther eare no remotes
+
+				pushd "$repo_dir" &> /dev/null
+				if [ -n "$(git status --porcelain)" ]; then
+					echo "repo '$owner/$repo' has uncommited changes, skipping"
+					popd &> /dev/null
+					return
 				fi
-				popd
+				popd &> /dev/null
 
 				rm --recursive --force "$repo_dir"
 			fi
@@ -273,6 +276,8 @@ Manage your local github repositories.
 
 Commands:
 	clone        Clone github repositories into REPO_ROOT.
+	clean        Clean up the repositories in REPO_ROOT.
+	list         Display a list of cloned repositories.
 
 Args:
     --show-config, -s  Show the script config values. If provided with a command, values will be printed before command runs. If not command, the values will be printed before exiting.
