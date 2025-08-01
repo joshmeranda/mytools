@@ -15,7 +15,8 @@ CLEAN_AFTER=${CLEAN_AFTER:-28}
 show_config() {
 	echo "GITHUB_REGISTRY: $GITHUB_REGISTRY
 SSH_USER:        $SSH_USER
-REPO_ROOT:       $REPO_ROOT"
+REPO_ROOT:       $REPO_ROOT
+CLEAN_AFTER:     $CLEAN_AFTER"
 }
 
 # for_each_repo is an iterato over each repository managed by this script. Expects an argument containing a command to
