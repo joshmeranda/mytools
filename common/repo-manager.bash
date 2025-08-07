@@ -11,12 +11,15 @@ GITHUB_REGISTRY=${GITHUB_REGISTRY:-github.com}
 SSH_USER=${SSH_USER:-git}
 REPO_ROOT=${REPO_ROOT:="$HOME/workspaces"}
 CLEAN_AFTER=${CLEAN_AFTER:-28}
+DEFAULT_CLONE_PROTO=${DEFAULT_CLONE_PROTO:=ssh}
 
 show_config() {
-	echo "GITHUB_REGISTRY: $GITHUB_REGISTRY
-SSH_USER:        $SSH_USER
-REPO_ROOT:       $REPO_ROOT
-CLEAN_AFTER:     $CLEAN_AFTER"
+	local column_length=20
+	local vars=(GITHUB_REGISTRY SSH_USER REPO_ROOT CLEAN_AFTER DEFAULT_CLONE_PROTO)
+
+	for var in ${vars[@]}; do
+		printf "%${column_length}s: %s\n" $var ${!var}
+	done
 }
 
 # for_each_repo is an iterato over each repository managed by this script. Expects an argument containing a command to
@@ -38,9 +41,27 @@ for_each_repo() {
 	done
 }
 
+# todo: support setting upstream (probably url only)
 clone() {
-	local https=true
-	local ssh=false
+	local https
+	local ssh
+
+	case "$DEFAULT_CLONE_PROTO" in
+		https )
+			https=true
+			ssh=false
+			;;
+
+		ssh )
+			https=false
+			ssh=true
+			;;
+
+		* )
+			echo "unsupported DEFAULT_CLONE_PROTO '$DEFAULT_CLONE_PROTO'"
+			exit 1
+			;;
+	esac
 
 	while [[ $# -gt 0 ]]; do
 		case "$1" in
@@ -87,17 +108,16 @@ Args:
 		1 )
 			clone_url="$1"
 
-			if [[ "$clone_url" =~ https://.* ]]; then
+			if [[ "$clone_url" =~ https://.*.git ]]; then
 				repo="$(basename $clone_url .git)"
-				owner="$(basename $clone_url $repo.git)"
+				owner="$(basename $(dirname $clone_url))"
 			elif [[ "$clone_url" =~ .*@*:.*/.*\.git ]]; then
 				repo="$(basename $clone_url .git)"
-				owner="$(cut -d : -f 1 <<< "${clone_url%/$repo.git}")"
+				owner="$(cut -d : -f 2 <<< "${clone_url%/$repo.git}")"
 			else
 				echo "could not detect owner and repo from url"
-				exit
+				exit 1
 			fi
-			
 			;;
 		
 		2 )
@@ -132,7 +152,7 @@ clean() {
 
 	while [ $# -gt 0 ]; do
 		case $1 in
-			--force | -f )
+			--yes | -y )
 				force=true
 				;;
 			
@@ -158,7 +178,7 @@ Clean up your repositories
 
 Args:
   --after, -a N  Clean repos after N many days without any modification 
-  --force, -f    Do not ask for confirmation before deleting repositories unless there are unstaged changes.
+  --yes, -y      Do not ask for confirmation before deleting repositories unless there are unstaged changes.
   --help, -h     Show this help text."
 				exit 1
 				;;
@@ -179,8 +199,10 @@ Args:
 				answer=Y
 			fi
 
-			until [[ $answer =~ [ynYN] ]]; do
-				read -n 1 -p "delete '$owner/$repo'? [N|y]" answer
+			until [[ $answer =~ ^[ynYN]$ ]]; do
+				# we do not use 'read -p' here to make testing this path easier
+				echo -n "delete '$owner/$repo'? [N|y]"
+				read answer
 
 				if [ -z $answer ]; then
 					answer=N
@@ -190,11 +212,11 @@ Args:
 			done
 
 			if [[ $answer =~ [yY] ]]; then
-				# todo: check if ther eare no remotes
+				# todo: check if there are no remotes
 
 				pushd "$repo_dir" &> /dev/null
 				if [ -n "$(git status --porcelain)" ]; then
-					echo "repo '$owner/$repo' has uncommited changes, skipping"
+					echo "repo '$owner/$repo' has an unclean worktree, skipping"
 					popd &> /dev/null
 					return
 				fi
@@ -219,10 +241,10 @@ list() {
 	local url_column_length=50
 	local format_str="%-${column_length}s%-${url_column_length}s%-${url_column_length}s\n"
 
-	printf "$format_str" owner/repo origin upstream
-
 	local origin
 	local upstream
+
+	printf "%-${column_length}s%-${url_column_length}s%-${url_column_length}s\n" owner/repo origin upstream
 
 	list_each() {
 		pushd $repo_dir &> /dev/null
