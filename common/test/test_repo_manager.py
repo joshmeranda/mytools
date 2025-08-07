@@ -211,6 +211,7 @@ def _clone_repos(tmp_path_factory: pytest.TempPathFactory) -> list[pathlib.Path]
 	joshmeranda_wrash = repo_root / "joshmeranda" / "wrash"
 	joshmeranda_fan = repo_root / "joshmeranda" / "fan"
 
+	# note: since we are not cloning static repos, the run time for this func will likely increase over time
 	_ = git.Repo.clone_from(url="https://github.com/joshmeranda/mytools.git", to_path=joshmeranda_mytools)
 	_ = git.Repo.clone_from(url="https://github.com/joshmeranda/wrash.git", to_path=joshmeranda_wrash)
 	_ = git.Repo.clone_from(url="https://github.com/joshmeranda/fan.git", to_path=joshmeranda_fan)
