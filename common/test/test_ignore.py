@@ -13,7 +13,7 @@ _ENV_GITIGNORE_PATH = "GITIGNORE_PATH"
 
 
 def _setup_repo(path: str, back_n_commits: int=0):
-	_ = git.Repo.clone_from(url="https://github.com/github/gitignore", to_path=path)
+	_ = git.Repo.clone_from(url="https://github.com/github/gitignore.git", to_path=path)
 
 	if back_n_commits > 0:
 		# todo: figure out how to do this with GitPython
