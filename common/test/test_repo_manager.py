@@ -14,6 +14,7 @@ _ENV_SSH_USER: str = "SSH_USER"
 _ENV_REPO_ROOT: str = "REPO_ROOT"
 _ENV_CLEAN_AFTER: str = "CLEAN_AFTER"
 _ENV_DEFAULT_CLONE_PROTO: str = "DEFAULT_CLONE_PROTO"
+_ENV_DO_NOT_CLEAN: str = "DO_NOT_CLEAN"
 
 
 def _assert_repo(path: pathlib.Path, expected_remotes: dict[str, str] = None):
@@ -40,13 +41,13 @@ class TestConfig:
 		)
 
 		assert 0 == proc.returncode
-		assert str.encode(f"     GITHUB_REGISTRY: github.com\n            SSH_USER: git\n           REPO_ROOT: {tmp_path}\n         CLEAN_AFTER: 28\n DEFAULT_CLONE_PROTO: ssh\n") == proc.stdout
+		assert str.encode(f"     GITHUB_REGISTRY: github.com\n            SSH_USER: git\n           REPO_ROOT: {tmp_path}\n         CLEAN_AFTER: 28\n DEFAULT_CLONE_PROTO: ssh\n        DO_NOT_CLEAN: \n") == proc.stdout
 
 	def test_show_config_with_non_default_file(self, tmp_path: pathlib.Path):
 		config_file = tmp_path / "config"
 		repo_root = tmp_path  / "repos"
 
-		config_file.write_text(f"GITHUB_REGISTRY=some.custom.registry.com\nSSH_USER=bbaggins\nREPO_ROOT={repo_root}\nCLEAN_AFTER=7\nDEFAULT_CLONE_PROTO=https\n")
+		config_file.write_text(f"GITHUB_REGISTRY=some.custom.registry.com\nSSH_USER=bbaggins\nREPO_ROOT={repo_root}\nCLEAN_AFTER=7\nDEFAULT_CLONE_PROTO=https\nDO_NOT_CLEAN=joshmeranda/mytools,joshmeranda/fan")
 
 		proc = subprocess.run(
 			args=[_REPO_MANAGER_PATH, "--show-config"],
@@ -59,7 +60,7 @@ class TestConfig:
 		)
 
 		assert 0 == proc.returncode
-		assert str.encode(f"     GITHUB_REGISTRY: some.custom.registry.com\n            SSH_USER: bbaggins\n           REPO_ROOT: {repo_root}\n         CLEAN_AFTER: 7\n DEFAULT_CLONE_PROTO: https\n") == proc.stdout
+		assert str.encode(f"     GITHUB_REGISTRY: some.custom.registry.com\n            SSH_USER: bbaggins\n           REPO_ROOT: {repo_root}\n         CLEAN_AFTER: 7\n DEFAULT_CLONE_PROTO: https\n        DO_NOT_CLEAN: joshmeranda/mytools,joshmeranda/fan\n") == proc.stdout
 
 
 class TestRepoManagerClone:
@@ -432,9 +433,32 @@ class TestRepoManagerClean:
 		assert _repo_root_old[2].exists()
 		assert _repo_root_old[3].exists()
 
+	def test_with_do_not_clean(self, _repo_root_old: list[pathlib.Path]):
+		repo_root = _repo_root_old[0]
+
+		proc = subprocess.run(
+			input=b'\n'.join([b"y"]),
+			args=[_REPO_MANAGER_PATH, "clean"],
+			env={
+				_ENV_REPO_ROOT: repo_root,
+				_ENV_CLEAN_AFTER: "7",
+				_ENV_DO_NOT_CLEAN: "joshmeranda/repo1,joshmeranda/wrash,joshmeranda/repo2"
+			},
+			capture_output=True,
+			timeout=_REPO_MANAGER_TIMEOUT,
+		)
+
+		assert 0 == proc.returncode
+		assert proc.stdout == b"delete 'joshmeranda/fan'? [N|y]\nskipping joshmeranda/wrash\n"
+
+		assert _repo_root_old[1].exists()
+		assert _repo_root_old[2].exists()
+		assert not _repo_root_old[3].exists()
+
 
 @pytest.fixture(scope="class")
 def _repo_root_list(tmp_path_factory: pytest.TempPathFactory) -> list[pathlib.Path]:
+
 	repos = _clone_repos(tmp_path_factory)
 
 	mytools_repo = git.Repo(repos[1])

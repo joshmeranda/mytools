@@ -15,7 +15,7 @@ DEFAULT_CLONE_PROTO=${DEFAULT_CLONE_PROTO:=ssh}
 
 show_config() {
 	local column_length=20
-	local vars=(GITHUB_REGISTRY SSH_USER REPO_ROOT CLEAN_AFTER DEFAULT_CLONE_PROTO)
+	local vars=(GITHUB_REGISTRY SSH_USER REPO_ROOT CLEAN_AFTER DEFAULT_CLONE_PROTO DO_NOT_CLEAN)
 
 	for var in ${vars[@]}; do
 		printf "%${column_length}s: %s\n" $var ${!var}
@@ -194,6 +194,12 @@ Args:
 
 		local answer=""
 
+		# todo: add validation to DO_NOT_CLEAN?
+		if [[ "$DO_NOT_CLEAN" =~ .*[,]?$owner/$repo[,]?.* ]]; then
+			echo skipping $owner/$repo
+			return
+		fi
+
 		if [ -z "$(find $repo_dir -mtime "-$after")" ]; then
 			if $force; then
 				answer=Y
@@ -292,6 +298,7 @@ while [ $# -gt 0 ]; do
 			;;
 
 		--help | -h )
+		# todo: document envvars
 			echo "$0: [-h]
 
 Manage your local github repositories.
