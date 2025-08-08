@@ -27,7 +27,7 @@ def _setup_repo(path: str, back_n_commits: int=0):
 			pytest.fail("repo setup failed")
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="class")
 def _gitignore_repo_root(tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
 	repo_root = tmp_path_factory.mktemp("gitignore_repo")
 	_setup_repo(str(repo_root / "gitignore"))

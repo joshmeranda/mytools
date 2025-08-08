@@ -5,11 +5,6 @@ import git
 import pytest
 import datetime
 
-# todo: test clean
-# todo: test list
-# todo: test --show-config
-# todo: test reading from config file
-
 _REPO_MANAGER_TIMEOUT: int = 1
 _REPO_MANAGER_PATH: str = os.path.abspath("common/repo-manager.bash")
 
@@ -438,7 +433,7 @@ class TestRepoManagerClean:
 		assert _repo_root_old[3].exists()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="class")
 def _repo_root_list(tmp_path_factory: pytest.TempPathFactory) -> list[pathlib.Path]:
 	repos = _clone_repos(tmp_path_factory)
 
