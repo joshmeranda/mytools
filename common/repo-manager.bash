@@ -200,7 +200,7 @@ Args:
 			return
 		fi
 
-		if [ -z "$(find $repo_dir -mtime "-$after")" ]; then
+		if [ -z "$(find $repo_dir -not -path '*.git*' -mtime "-$after")" ]; then
 			if $force; then
 				answer=Y
 			fi
