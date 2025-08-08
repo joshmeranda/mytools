@@ -220,13 +220,10 @@ Args:
 			if [[ $answer =~ [yY] ]]; then
 				# todo: check if there are no remotes
 
-				pushd "$repo_dir" &> /dev/null
-				if [ -n "$(git status --porcelain)" ]; then
+				if [ -n "$(git -C "$repo_dir" status --porcelain)" ]; then
 					echo "repo '$owner/$repo' has an unclean worktree, skipping"
-					popd &> /dev/null
 					return
 				fi
-				popd &> /dev/null
 
 				rm --recursive --force "$repo_dir"
 			fi
