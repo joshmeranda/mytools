@@ -455,6 +455,30 @@ class TestRepoManagerClean:
 		assert _repo_root_old[2].exists()
 		assert not _repo_root_old[3].exists()
 
+	def test_with_no_remotes(self, _repo_root_old: list[pathlib.Path]):
+		repo_root = _repo_root_old[0]
+
+		fan_repo = git.Repo(_repo_root_old[3])
+		fan_repo.delete_remote(fan_repo.remote("origin"))
+		_make_path_old(_repo_root_old[3], 30)
+
+		proc = subprocess.run(
+			input=b'\n'.join([b"y"]),
+			args=[_REPO_MANAGER_PATH, "clean"],
+			env={
+				_ENV_REPO_ROOT: repo_root,
+			},
+			# capture_output=True,
+			timeout=_REPO_MANAGER_TIMEOUT,
+		)
+
+		assert 0 == proc.returncode
+		assert b"repo 'joshmeranda/fan' has no remotes, skipping" == proc.stdout
+
+		assert _repo_root_old[1].exists()
+		assert _repo_root_old[2].exists()
+		assert _repo_root_old[3].exists()
+
 
 @pytest.fixture(scope="class")
 def _repo_root_list(tmp_path_factory: pytest.TempPathFactory) -> list[pathlib.Path]:

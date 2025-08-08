@@ -218,16 +218,19 @@ Args:
 			done
 
 			if [[ $answer =~ [yY] ]]; then
-				# todo: check if there are no remotes
-
+				# todo: move these git checks to earlier
 				if [ -n "$(git -C "$repo_dir" status --porcelain)" ]; then
 					echo "repo '$owner/$repo' has an unclean worktree, skipping"
+					return
+				elif [ -z "$(git -C "$repo_dir" remote)" ]; then
+					echo "repo '$owner/$repo' has no remotes, skipping"
 					return
 				fi
 
 				rm --recursive --force "$repo_dir"
 			fi
 
+			# todo: can probably be deleted
 			answer=""
 		fi
 
