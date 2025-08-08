@@ -7,27 +7,50 @@
 SCRIPT_NAME="$(basename "$0")"
 
 usage() {
-echo "Usage: $SCRIPT_NAME SOURCE... DEST"
+    echo "Usage: $SCRIPT_NAM SRC DST"
 }
 
-echo_err() {
-    echo -e "$SCRIPT_NAME: $1" 2>&1
-}
-
-if [ "$1" == "--help" ]; then usage; exit 1; fi
-
-if [ "$#" -lt 2 ]; then
-    echo_err "missing operands."
+if [ "$1" == "--help" ]; then
     usage
-    exit 1;
+    exit 1
 fi
 
-sources=("$@")
-dest="${sources[-1]}"
 
-unset 'sources[${#sources[@]} - 1]'
+case $# in
+    0 )
+        echo "missing SRC and DST args"
+        exit 1
+        ;;
 
-find "${sources[@]}" -mindepth 1 -maxdepth 1 -ignore_readdir_race -exec \
-    mv --verbose --target-directory "$dest" '{}' +
+    1 )
+        echo "missing DST arg"
+        exit 1
+        ;;
 
-rmdir --verbose "${sources[@]}"
+    2 )
+        src="$1"
+        dst="$2"
+        ;;
+
+    * )
+        echo "found too many args"
+        exit 1
+        ;;
+esac
+
+if [ "$src" = "$dst" ]; then
+    echo "cannot drain '$src' into itself"
+    exit 1
+fi
+
+targets="$(find "$src" -mindepth 1 -maxdepth 1 -ignore_readdir_race)"
+
+for t in $targets; do
+    if [ -e "$dst/$(basename $t)" ]; then
+        echo "SRC and DST have a conflict '$(basename $t)'"
+        exit 1
+    fi
+done
+
+mv --verbose --target-directory "$dst" $targets
+rmdir --verbose "$src"
