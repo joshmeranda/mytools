@@ -198,6 +198,12 @@ Args:
 		if [[ "$DO_NOT_CLEAN" =~ .*[,]?$owner/$repo[,]?.* ]]; then
 			echo skipping $owner/$repo
 			return
+		elif [ -n "$(git -C "$repo_dir" status --porcelain)" ]; then
+			echo "repo '$owner/$repo' has an unclean worktree, skipping"
+			return
+		elif [ -z "$(git -C "$repo_dir" remote)" ]; then
+			echo "repo '$owner/$repo' has no remotes, skipping"
+			return
 		fi
 
 		if [ -z "$(find $repo_dir -not -path '*.git*' -mtime "-$after")" ]; then
@@ -218,15 +224,6 @@ Args:
 			done
 
 			if [[ $answer =~ [yY] ]]; then
-				# todo: move these git checks to earlier
-				if [ -n "$(git -C "$repo_dir" status --porcelain)" ]; then
-					echo "repo '$owner/$repo' has an unclean worktree, skipping"
-					return
-				elif [ -z "$(git -C "$repo_dir" remote)" ]; then
-					echo "repo '$owner/$repo' has no remotes, skipping"
-					return
-				fi
-
 				rm --recursive --force "$repo_dir"
 			fi
 

@@ -5,7 +5,7 @@ import git
 import pytest
 import datetime
 
-_REPO_MANAGER_TIMEOUT: int = 1
+_REPO_MANAGER_TIMEOUT: int = 10
 _REPO_MANAGER_PATH: str = os.path.abspath("common/repo-manager.bash")
 
 _ENV_CONFIG: str = "CONFIG"
@@ -417,7 +417,6 @@ class TestRepoManagerClean:
 		repo_root = _repo_root_old[0]
 
 		proc = subprocess.run(
-			input=b'\n'.join([b"y"]),
 			args=[_REPO_MANAGER_PATH, "clean"],
 			env={
 				_ENV_REPO_ROOT: repo_root,
@@ -427,7 +426,7 @@ class TestRepoManagerClean:
 		)
 
 		assert 0 == proc.returncode
-		assert b"delete 'joshmeranda/fan'? [N|y]\nrepo 'joshmeranda/fan' has an unclean worktree, skipping\n" == proc.stdout
+		assert b"repo 'joshmeranda/fan' has an unclean worktree, skipping\n" == proc.stdout
 
 		assert _repo_root_old[1].exists()
 		assert _repo_root_old[2].exists()
@@ -460,20 +459,18 @@ class TestRepoManagerClean:
 
 		fan_repo = git.Repo(_repo_root_old[3])
 		fan_repo.delete_remote(fan_repo.remote("origin"))
-		_make_path_old(_repo_root_old[3], 30)
 
 		proc = subprocess.run(
-			input=b'\n'.join([b"y"]),
 			args=[_REPO_MANAGER_PATH, "clean"],
 			env={
 				_ENV_REPO_ROOT: repo_root,
 			},
-			# capture_output=True,
+			capture_output=True,
 			timeout=_REPO_MANAGER_TIMEOUT,
 		)
 
 		assert 0 == proc.returncode
-		assert b"repo 'joshmeranda/fan' has no remotes, skipping" == proc.stdout
+		assert b"repo 'joshmeranda/fan' has no remotes, skipping\n" == proc.stdout
 
 		assert _repo_root_old[1].exists()
 		assert _repo_root_old[2].exists()
