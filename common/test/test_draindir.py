@@ -46,7 +46,7 @@ class TestDraindir:
 			timeout=_DRAINDIR_TIMEOUT,
 		)
 
-		assert 0 != proc.returncode
+		assert proc.returncode != 0
 
 	def test_empty_dir(self, tmp_path: pathlib.Path):
 		src = (tmp_path / "dir")
@@ -58,8 +58,7 @@ class TestDraindir:
 			timeout=_DRAINDIR_TIMEOUT,
 		)
 
-		assert 0 == proc.returncode
-
+		assert proc.returncode == 0
 		assert not src.exists()
 
 	def test_into_cwd(self, tmp_path: pathlib.Path, _drain_src: pathlib.Path):
@@ -70,7 +69,7 @@ class TestDraindir:
 			timeout=_DRAINDIR_TIMEOUT,
 		)
 
-		assert 0 == proc.returncode
+		assert proc.returncode == 0
 		_assert_drain(_drain_src, tmp_path)
 
 	def test_into_dir(self, tmp_path: pathlib.Path, _drain_src: pathlib.Path):
@@ -80,7 +79,7 @@ class TestDraindir:
 			timeout=_DRAINDIR_TIMEOUT,
 		)
 
-		assert 0 == proc.returncode
+		assert proc.returncode == 0
 		_assert_drain(_drain_src, tmp_path)
 
 	def test_into_self(self, _drain_src: pathlib.Path):
@@ -90,7 +89,8 @@ class TestDraindir:
 			timeout=_DRAINDIR_TIMEOUT,
 		)
 
-		assert 0 != proc.returncode
+		assert proc.returncode != 0
+		assert proc.stdout == str.encode(f"cannot drain '{_drain_src}' into itself\n")
 		_assert_files_in(_drain_src)
 
 	def test_too_many_args(self, tmp_path: pathlib.Path,_drain_src: pathlib.Path):
@@ -100,8 +100,8 @@ class TestDraindir:
 			timeout=_DRAINDIR_TIMEOUT,
 		)
 
-		assert 0 != proc.returncode
-		assert b"found too many args\n" == proc.stdout
+		assert proc.returncode != 0
+		assert proc.stdout == b"found too many args\n"
 
 		_assert_files_in(_drain_src)
 
@@ -112,8 +112,8 @@ class TestDraindir:
 			timeout=_DRAINDIR_TIMEOUT,
 		)
 
-		assert 0 != proc.returncode
-		assert b"missing DST arg\n" == proc.stdout
+		assert proc.returncode != 0
+		assert proc.stdout == b"missing DST arg\n"
 
 		_assert_files_in(_drain_src)
 
@@ -124,8 +124,8 @@ class TestDraindir:
 			timeout=_DRAINDIR_TIMEOUT,
 		)
 
-		assert 0 != proc.returncode
-		assert b"missing SRC and DST args\n" == proc.stdout
+		assert proc.returncode != 0
+		assert proc.stdout == b"missing SRC and DST args\n"
 
 		_assert_files_in(_drain_src)
 
@@ -139,13 +139,13 @@ class TestDraindir:
 			timeout=_DRAINDIR_TIMEOUT,
 		)
 
-		assert 1 == proc.returncode
-		assert b"SRC and DST have a conflict 'dir'\n" == proc.stdout
+		assert proc.returncode == 1
+		assert proc.stdout == b"SRC and DST have a conflict 'dir'\n"
 
 		assert not (tmp_path / "file").exists()
 		assert not (tmp_path / ".hidden").exists()
 		assert (tmp_path / "dir").exists()
 		assert (tmp_path / "dir" / "file").exists()
-		assert "def" == (tmp_path / "dir" / "file").read_text()
+		assert (tmp_path / "dir" / "file").read_text() == "def"
 
 		_assert_files_in(_drain_src)

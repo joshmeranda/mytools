@@ -19,10 +19,10 @@ class TestBak:
 			timeout=_BAK_TIMEOUT,
 		)
 
-		assert 0 == proc.returncode
+		assert proc.returncode == 0
 		assert file.exists()
 		assert (tmp_path / "~file").exists()
-		assert "abc" == (tmp_path / "~file").read_text()
+		assert (tmp_path / "~file").read_text() == "abc"
 
 	def test_different_dirs(self, tmp_path: pathlib.Path):
 		file = tmp_path / "file"
@@ -34,10 +34,10 @@ class TestBak:
 			timeout=_BAK_TIMEOUT,
 		)
 
-		assert 0 == proc.returncode
+		assert proc.returncode == 0
 		assert file.exists()
 		assert (tmp_path / "~file").exists()
-		assert "abc" == (tmp_path / "~file").read_text()
+		assert (tmp_path / "~file").read_text() == "abc"
 
 	def test_prefix(self, tmp_path: pathlib.Path):
 		file = tmp_path / "file"
@@ -50,10 +50,10 @@ class TestBak:
 			timeout=_BAK_TIMEOUT,
 		)
 
-		assert 0 == proc.returncode
+		assert proc.returncode == 0
 		assert file.exists()
 		assert (tmp_path / "prefix-file").exists()
-		assert "abc" == (tmp_path / "prefix-file").read_text()
+		assert (tmp_path / "prefix-file").read_text() == "abc"
 
 	def test_suffix(self, tmp_path: pathlib.Path):
 		file = tmp_path / "file"
@@ -66,10 +66,10 @@ class TestBak:
 			timeout=_BAK_TIMEOUT,
 		)
 
-		assert 0 == proc.returncode
+		assert proc.returncode == 0
 		assert file.exists()
 		assert (tmp_path / "file-suffix").exists()
-		assert "abc" == (tmp_path / "file-suffix").read_text()
+		assert (tmp_path / "file-suffix").read_text() == "abc"
 
 	def test_multiple_files(self, tmp_path: pathlib.Path):
 		file_a = tmp_path / "file_a"
@@ -89,11 +89,11 @@ class TestBak:
 
 		assert file_a.exists()
 		assert (tmp_path / "~file_a").exists()
-		assert "abc" == (tmp_path / "~file_a").read_text()
+		assert (tmp_path / "~file_a").read_text() == "abc"
 
 		assert file_b.exists()
 		assert (tmp_path / "~file_b").exists()
-		assert "abc" == (tmp_path / "~file_b").read_text()
+		assert (tmp_path / "~file_b").read_text() == "abc"
 
 	def test_missing_prefix_value(self):
 		proc = subprocess.run(
@@ -102,8 +102,8 @@ class TestBak:
 			timeout=_BAK_TIMEOUT,
 		)
 
-		assert 0 != proc.returncode
-		assert b"expected prefix but found none\n" == proc.stdout
+		assert proc.returncode != 0
+		assert proc.stdout == b"expected prefix but found none\n"
 
 	def test_missing_suffix_value(self):
 		proc = subprocess.run(
@@ -112,8 +112,8 @@ class TestBak:
 			timeout=_BAK_TIMEOUT,
 		)
 
-		assert 0 != proc.returncode
-		assert b"expected suffix but found none\n" == proc.stdout
+		assert proc.returncode != 0
+		assert proc.stdout ==  b"expected suffix but found none\n"
 
 	def test_missing_file(self):
 		proc = subprocess.run(
@@ -122,5 +122,5 @@ class TestBak:
 			timeout=_BAK_TIMEOUT,
 		)
 
-		assert 0 != proc.returncode
-		assert b"expected files but found none\n" == proc.stdout
+		assert proc.returncode != 0
+		assert proc.stdout == b"expected files but found none\n"

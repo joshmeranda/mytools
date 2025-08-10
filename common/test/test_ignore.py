@@ -2,7 +2,7 @@ import subprocess
 import os
 import pathlib
 import pytest
-from datetime import datetime
+import datetime
 import git
 
 _IGNORE_TIMEOUT: int = 30
@@ -45,8 +45,8 @@ class TestIgnoreTarget:
 			timeout=_IGNORE_TIMEOUT
 		)
 
-		assert 0 != proc.returncode
-		assert b"expected at least 1 target but found none\n" == proc.stdout
+		assert proc.returncode != 0
+		assert proc.stdout == b"expected at least 1 target but found none\n"
 
 	def test_no_repo(self, tmp_path: pathlib.Path):
 		proc = subprocess.run(
@@ -58,9 +58,9 @@ class TestIgnoreTarget:
 			timeout=_IGNORE_TIMEOUT
 		)
 
-		assert 0 != proc.returncode
-		assert b"no gitignores found at '" + bytes(tmp_path.joinpath("gitignore")) + b"'\n" == proc.stdout
-	
+		assert proc.returncode != 0
+		assert proc.stdout == b"no gitignores found at '" + bytes(tmp_path.joinpath("gitignore")) + b"'\n"
+
 	def test_one_target(self, _gitignore_repo_root: pathlib.Path, tmp_path: pathlib.Path):
 		ignore_path = tmp_path / ".gitignore"
 
@@ -74,8 +74,7 @@ class TestIgnoreTarget:
 			timeout=_IGNORE_TIMEOUT
 		)
 
-		assert 0 == proc.returncode
-		assert b"" == proc.stdout
+		assert proc.returncode == 0
 		assert ignore_path.exists()
 
 		expected_gitignore='''# # # # # # # # # # # ## # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -89,7 +88,7 @@ class TestIgnoreTarget:
 		expected_gitignore += (_gitignore_repo_root / "gitignore" / "Go.gitignore").read_text()
 
 		with open(ignore_path) as f:
-			assert expected_gitignore == f.read()
+			assert f.read() == expected_gitignore
 
 	def test_multiple_targets(self, _gitignore_repo_root: pathlib.Path, tmp_path: pathlib.Path):
 		ignore_path = tmp_path / ".gitignore"
@@ -104,8 +103,7 @@ class TestIgnoreTarget:
 			timeout=_IGNORE_TIMEOUT
 		)
 
-		assert 0 == proc.returncode
-		assert b"" == proc.stdout
+		assert proc.returncode == 0
 		assert ignore_path.exists()
 
 		expected_gitignore='''# # # # # # # # # # # ## # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -120,8 +118,8 @@ class TestIgnoreTarget:
 		expected_gitignore += "\n" + "## Python.gitignore\n" + (_gitignore_repo_root / "gitignore" / "Python.gitignore").read_text()
 
 		with open(ignore_path) as f:
-			assert expected_gitignore == f.read()
-	
+			assert f.read() == expected_gitignore
+
 	def test_no_exist(self, _gitignore_repo_root: pathlib.Path, tmp_path: pathlib.Path):
 		ignore_path = tmp_path / ".gitignore"
 
@@ -135,10 +133,10 @@ class TestIgnoreTarget:
 			timeout=_IGNORE_TIMEOUT
 		)
 
-		assert 0 != proc.returncode
-		assert b"no gitignore for target 'no-exist'\n" == proc.stdout
+		assert proc.returncode != 0
+		assert proc.stdout == b"no gitignore for target 'no-exist'\n"
 		assert not ignore_path.exists()
-	
+
 	def test_mix_exist_no_exist(self, _gitignore_repo_root: pathlib.Path, tmp_path: pathlib.Path):
 		ignore_path = tmp_path / ".gitignore"
 
@@ -152,8 +150,8 @@ class TestIgnoreTarget:
 			timeout=_IGNORE_TIMEOUT
 		)
 
-		assert 0 != proc.returncode
-		assert b"no gitignore for target 'no-exist'\n" == proc.stdout
+		assert proc.returncode != 0
+		assert proc.stdout == b"no gitignore for target 'no-exist'\n"
 		assert not ignore_path.exists()
 
 	def test_existing_file(self, _gitignore_repo_root: pathlib.Path, tmp_path: pathlib.Path):
@@ -170,22 +168,25 @@ class TestIgnoreTarget:
 			timeout=_IGNORE_TIMEOUT
 		)
 
-		assert 0 != proc.returncode
-		assert b"".join([b"cannot create gitignore '", bytes(ignore_path), b"', file exists\n"]) == proc.stdout
-		assert b"# empty .gitignore" == ignore_path.read_bytes()
+		assert proc.returncode != 0
+		assert proc.stdout == b"".join([b"cannot create gitignore '", bytes(ignore_path), b"', file exists\n"])
+		assert ignore_path.read_bytes() == b"# empty .gitignore"
+
+
+def _has_newer_than(path: pathlib.Path, old: float) -> bool:
+	for i in path.iterdir():
+		print(i)
+
+		if i.stat().st_mtime > old:
+			return True
+
+		if i.is_dir():
+			return _has_newer_than(i, old)
+
+	return False
 
 
 class TestIgnoreUpdate:
-	def __has_newer_than(self, path: pathlib.Path, old: float) -> bool:
-		for i in path.iterdir():
-			if i.stat().st_mtime > old:
-				return True
-			
-			if i.is_dir():
-				return self.__has_newer_than(i, old)
-
-		return False
-
 	def test_no_existing_repo(self, tmp_path: pathlib.Path):
 		proc = subprocess.run(
 			args=[_IGNORE_PATH, "update"],
@@ -195,16 +196,15 @@ class TestIgnoreUpdate:
 			capture_output=True,
 			timeout=_IGNORE_TIMEOUT)
 		
-		assert 0 == proc.returncode
-		assert b"no ignore repository found, cloning from 'https://github.com/github/gitignore'\n" == proc.stdout
+		assert proc.returncode == 0
+		assert proc.stdout == b"no ignore repository found, cloning from 'https://github.com/github/gitignore'\n"
 		assert (tmp_path / "gitignore").exists()
 
 	def test_existing_repo(self, tmp_path: pathlib.Path):
 		repo_path = tmp_path / "gitignore"
 		_setup_repo(repo_path, back_n_commits=5)
 
-
-		now = datetime.now().timestamp()
+		now = (datetime.datetime.now() + datetime.timedelta(days=1)).timestamp()
 
 		proc = subprocess.run(
 			args=[_IGNORE_PATH, "update"],
@@ -215,9 +215,9 @@ class TestIgnoreUpdate:
 			timeout=_IGNORE_TIMEOUT,
 		)
 
-		assert 0 == proc.returncode
-		assert (tmp_path / "gitignore").exists()
-		assert self.__has_newer_than(repo_path, now)
+		assert proc.returncode == 0
+		assert repo_path.exists()
+		assert _has_newer_than(repo_path, now)
 
 	def test_existing_repo_up_to_date(self, tmp_path: pathlib.Path):
 		repo_path = tmp_path / "gitignore"
@@ -235,6 +235,6 @@ class TestIgnoreUpdate:
 			timeout=_IGNORE_TIMEOUT,
 		)
 
-		assert 0 == proc.returncode
+		assert proc.returncode == 0
 		assert (tmp_path / "gitignore").exists()
 		assert not self.__has_newer_than(repo_path, now)

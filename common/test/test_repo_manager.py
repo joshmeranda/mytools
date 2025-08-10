@@ -26,7 +26,7 @@ def _assert_repo(path: pathlib.Path, expected_remotes: dict[str, str] = None):
 	if expected_remotes is not None:
 		for expected_name, expected_url in expected_remotes.items():
 			assert expected_name in remotes
-			assert expected_url == remotes[expected_name].url
+			assert remotes[expected_name].url == expected_url
 
 
 class TestConfig:
@@ -40,8 +40,8 @@ class TestConfig:
 			timeout=_REPO_MANAGER_TIMEOUT,
 		)
 
-		assert 0 == proc.returncode
-		assert str.encode(f"     GITHUB_REGISTRY: github.com\n            SSH_USER: git\n           REPO_ROOT: {tmp_path}\n         CLEAN_AFTER: 28\n DEFAULT_CLONE_PROTO: ssh\n        DO_NOT_CLEAN: \n") == proc.stdout
+		assert proc.returncode == 0
+		assert proc.stdout == str.encode(f"     GITHUB_REGISTRY: github.com\n            SSH_USER: git\n           REPO_ROOT: {tmp_path}\n         CLEAN_AFTER: 28\n DEFAULT_CLONE_PROTO: ssh\n        DO_NOT_CLEAN: \n")
 
 	def test_show_config_with_non_default_file(self, tmp_path: pathlib.Path):
 		config_file = tmp_path / "config"
@@ -59,8 +59,8 @@ class TestConfig:
 			timeout=_REPO_MANAGER_TIMEOUT
 		)
 
-		assert 0 == proc.returncode
-		assert str.encode(f"     GITHUB_REGISTRY: some.custom.registry.com\n            SSH_USER: bbaggins\n           REPO_ROOT: {repo_root}\n         CLEAN_AFTER: 7\n DEFAULT_CLONE_PROTO: https\n        DO_NOT_CLEAN: joshmeranda/mytools,joshmeranda/fan\n") == proc.stdout
+		assert proc.returncode == 0
+		assert proc.stdout == str.encode(f"     GITHUB_REGISTRY: some.custom.registry.com\n            SSH_USER: bbaggins\n           REPO_ROOT: {repo_root}\n         CLEAN_AFTER: 7\n DEFAULT_CLONE_PROTO: https\n        DO_NOT_CLEAN: joshmeranda/mytools,joshmeranda/fan\n")
 
 
 class TestRepoManagerClone:
@@ -74,8 +74,8 @@ class TestRepoManagerClone:
 			timeout=_REPO_MANAGER_TIMEOUT,
 		)
 
-		assert 0 != proc.returncode
-		assert b"expected args but found none\n" == proc.stdout
+		assert proc.returncode != 0
+		assert proc.stdout == b"expected args but found none\n"
 
 	def test_with_too_many_args(self, tmp_path: pathlib.Path):
 		proc = subprocess.run(
@@ -87,8 +87,8 @@ class TestRepoManagerClone:
 			timeout=_REPO_MANAGER_TIMEOUT,
 		)
 
-		assert 0 != proc.returncode
-		assert b"found more args than expected\n" == proc.stdout
+		assert proc.returncode != 0
+		assert proc.stdout ==  b"found more args than expected\n"
 
 	def test_with_owner_repo_default(self, tmp_path: pathlib.Path):
 		proc = subprocess.run(
@@ -100,7 +100,7 @@ class TestRepoManagerClone:
 			timeout=_REPO_MANAGER_TIMEOUT,
 		)
 
-		assert 0 == proc.returncode
+		assert proc.returncode == 0
 		_assert_repo(tmp_path / "joshmeranda" / "mytools", expected_remotes={"origin": "git@github.com:joshmeranda/mytools.git"})
 
 	def test_with_owner_repo_env_ssh(self, tmp_path: pathlib.Path):
@@ -114,7 +114,7 @@ class TestRepoManagerClone:
 			timeout=_REPO_MANAGER_TIMEOUT,
 		)
 
-		assert 0 == proc.returncode
+		assert proc.returncode == 0
 		_assert_repo(tmp_path / "joshmeranda" / "mytools", expected_remotes={"origin": "git@github.com:joshmeranda/mytools.git"})
 
 	def test_with_owner_repo_env_bad(self, tmp_path: pathlib.Path):
@@ -128,8 +128,8 @@ class TestRepoManagerClone:
 			timeout=_REPO_MANAGER_TIMEOUT,
 		)
 
-		assert 0 != proc.returncode
-		assert b"unsupported DEFAULT_CLONE_PROTO 'bad'\n" == proc.stdout
+		assert proc.returncode != 0
+		assert proc.stdout == b"unsupported DEFAULT_CLONE_PROTO 'bad'\n"
 		assert not (tmp_path / "joshmeranda" / "mytools").exists()
 
 	def test_with_owner_repo_flag_ssh(self, tmp_path: pathlib.Path):
@@ -142,7 +142,7 @@ class TestRepoManagerClone:
 			timeout=_REPO_MANAGER_TIMEOUT,
 		)
 
-		assert 0 == proc.returncode
+		assert proc.returncode == 0
 		_assert_repo(tmp_path / "joshmeranda" / "mytools", expected_remotes={"origin": "git@github.com:joshmeranda/mytools.git"})
 	
 	def test_with_owner_repo_flag_https(self, tmp_path: pathlib.Path):
@@ -155,7 +155,7 @@ class TestRepoManagerClone:
 			timeout=_REPO_MANAGER_TIMEOUT,
 		)
 
-		assert 0 == proc.returncode
+		assert proc.returncode == 0
 		_assert_repo(tmp_path / "joshmeranda" / "mytools", expected_remotes={"origin": "https://github.com/joshmeranda/mytools.git"})
 	
 	def test_with_url_ssh(self, tmp_path: pathlib.Path):
@@ -168,7 +168,7 @@ class TestRepoManagerClone:
 			timeout=_REPO_MANAGER_TIMEOUT,
 		)
 
-		assert 0 == proc.returncode
+		assert proc.returncode == 0
 		_assert_repo(tmp_path / "joshmeranda" / "mytools", expected_remotes={"origin": "git@github.com:joshmeranda/mytools.git"})
 
 	def test_with_url_https(self, tmp_path: pathlib.Path):
@@ -181,7 +181,7 @@ class TestRepoManagerClone:
 			timeout=_REPO_MANAGER_TIMEOUT,
 		)
 
-		assert 0 == proc.returncode
+		assert proc.returncode == 0
 		_assert_repo(tmp_path / "joshmeranda" / "mytools", expected_remotes={"origin": "https://github.com/joshmeranda/mytools.git"})
 
 	def test_with_bad_scheme(self, tmp_path: pathlib.Path):
@@ -194,8 +194,8 @@ class TestRepoManagerClone:
 			timeout=_REPO_MANAGER_TIMEOUT,
 		)
 
-		assert 0 != proc.returncode
-		assert b"could not detect owner and repo from url\n" == proc.stdout
+		assert proc.returncode != 0
+		assert proc.stdout == b"could not detect owner and repo from url\n"
 		assert not (tmp_path / "joshmeranda" / "mytools").exists()
 
 
@@ -253,8 +253,8 @@ class TestRepoManagerClean:
 			timeout=_REPO_MANAGER_TIMEOUT,
 		)
 
-		assert 0 == proc.returncode
-		assert b"" == proc.stdout
+		assert proc.returncode == 0
+		assert proc.stdout == b""
 
 	def test_with_empty_root(self, tmp_path: pathlib.Path):
 		proc = subprocess.run(
@@ -266,8 +266,8 @@ class TestRepoManagerClean:
 			timeout=_REPO_MANAGER_TIMEOUT,
 		)
 
-		assert 0 == proc.returncode
-		assert b"" == proc.stdout
+		assert proc.returncode == 0
+		assert proc.stdout == b""
 
 	def test_with_up_to_date_root(self, _repo_root: list[pathlib.Path]):
 		repo_root = _repo_root[0]
@@ -281,8 +281,8 @@ class TestRepoManagerClean:
 			timeout=_REPO_MANAGER_TIMEOUT,
 		)
 
-		assert 0 == proc.returncode
-		assert b"" == proc.stdout
+		assert proc.returncode == 0
+		assert proc.stdout == b""
 
 	def test_with_old_root_yes_to_all(self, _repo_root_old: list[pathlib.Path]):
 		repo_root = _repo_root_old[0]
@@ -298,8 +298,8 @@ class TestRepoManagerClean:
 			timeout=_REPO_MANAGER_TIMEOUT,
 		)
 
-		assert 0 == proc.returncode
-		assert b"delete 'joshmeranda/fan'? [N|y]\ndelete 'joshmeranda/wrash'? [N|y]\n" == proc.stdout
+		assert proc.returncode == 0
+		assert proc.stdout == b"delete 'joshmeranda/fan'? [N|y]\ndelete 'joshmeranda/wrash'? [N|y]\n"
 
 		assert _repo_root_old[1].exists()
 		assert not _repo_root_old[2].exists()
@@ -319,8 +319,8 @@ class TestRepoManagerClean:
 			timeout=_REPO_MANAGER_TIMEOUT,
 		)
 
-		assert 0 == proc.returncode
-		assert b"delete 'joshmeranda/fan'? [N|y]\ndelete 'joshmeranda/wrash'? [N|y]\n" == proc.stdout
+		assert proc.returncode == 0
+		assert proc.stdout == b"delete 'joshmeranda/fan'? [N|y]\ndelete 'joshmeranda/wrash'? [N|y]\n"
 
 		assert _repo_root_old[1].exists()
 		assert not _repo_root_old[2].exists()
@@ -340,8 +340,8 @@ class TestRepoManagerClean:
 			timeout=_REPO_MANAGER_TIMEOUT,
 		)
 
-		assert 0 == proc.returncode
-		assert b"" == proc.stdout
+		assert proc.returncode == 0
+		assert proc.stdout == b""
 
 		assert _repo_root_old[1].exists()
 		assert not _repo_root_old[2].exists()
@@ -360,8 +360,8 @@ class TestRepoManagerClean:
 			timeout=_REPO_MANAGER_TIMEOUT,
 		)
 
-		assert 0 == proc.returncode
-		assert b"delete 'joshmeranda/fan'? [N|y]\ndelete 'joshmeranda/wrash'? [N|y]\n" == proc.stdout
+		assert proc.returncode == 0
+		assert proc.stdout == b"delete 'joshmeranda/fan'? [N|y]\ndelete 'joshmeranda/wrash'? [N|y]\n"
 
 		assert _repo_root_old[1].exists()
 		assert not _repo_root_old[2].exists()
@@ -380,8 +380,8 @@ class TestRepoManagerClean:
 			timeout=_REPO_MANAGER_TIMEOUT,
 		)
 
-		assert 0 == proc.returncode
-		assert b"delete 'joshmeranda/fan'? [N|y]\ndelete 'joshmeranda/fan'? [N|y]\n" == proc.stdout
+		assert proc.returncode == 0
+		assert proc.stdout == b"delete 'joshmeranda/fan'? [N|y]\ndelete 'joshmeranda/fan'? [N|y]\n"
 
 		assert _repo_root_old[1].exists()
 		assert _repo_root_old[2].exists()
@@ -400,8 +400,8 @@ class TestRepoManagerClean:
 			timeout=_REPO_MANAGER_TIMEOUT,
 		)
 
-		assert 0 == proc.returncode
-		assert b"delete 'joshmeranda/fan'? [N|y]" == proc.stdout
+		assert proc.returncode == 0
+		assert proc.stdout == b"delete 'joshmeranda/fan'? [N|y]"
 
 		assert _repo_root_old[1].exists()
 		assert _repo_root_old[2].exists()
@@ -425,8 +425,8 @@ class TestRepoManagerClean:
 			timeout=_REPO_MANAGER_TIMEOUT,
 		)
 
-		assert 0 == proc.returncode
-		assert b"repo 'joshmeranda/fan' has an unclean worktree, skipping\n" == proc.stdout
+		assert proc.returncode == 0
+		assert proc.stdout == b"repo 'joshmeranda/fan' has an unclean worktree, skipping\n"
 
 		assert _repo_root_old[1].exists()
 		assert _repo_root_old[2].exists()
@@ -447,7 +447,7 @@ class TestRepoManagerClean:
 			timeout=_REPO_MANAGER_TIMEOUT,
 		)
 
-		assert 0 == proc.returncode
+		assert proc.returncode == 0
 		assert proc.stdout == b"delete 'joshmeranda/fan'? [N|y]\nskipping joshmeranda/wrash\n"
 
 		assert _repo_root_old[1].exists()
@@ -469,8 +469,8 @@ class TestRepoManagerClean:
 			timeout=_REPO_MANAGER_TIMEOUT,
 		)
 
-		assert 0 == proc.returncode
-		assert b"repo 'joshmeranda/fan' has no remotes, skipping\n" == proc.stdout
+		assert proc.returncode == 0
+		assert proc.stdout ==  b"repo 'joshmeranda/fan' has no remotes, skipping\n"
 
 		assert _repo_root_old[1].exists()
 		assert _repo_root_old[2].exists()
@@ -485,7 +485,7 @@ def _repo_root_list(tmp_path_factory: pytest.TempPathFactory) -> list[pathlib.Pa
 	mytools_repo = git.Repo(repos[1])
 	mytools_repo.delete_remote(mytools_repo.remote("origin"))
 
-	wrash_repo = git.Repo(repos[2])
+	# wrash_repo = git.Repo(repos[2])
 
 	fan_repo = git.Repo(repos[3])
 	fan_repo.create_remote("upstream", fan_repo.remote("origin").url)
@@ -507,10 +507,10 @@ class TestRepoManagerList:
 			timeout=_REPO_MANAGER_TIMEOUT,
 		)
 
-		assert 0 == proc.returncode
-		assert b"\n".join([
+		assert proc.returncode == 0
+		assert proc.stdout ==  b"\n".join([
 			b"owner/repo                         origin                                            upstream                                          ",
 			b"joshmeranda/fan                    https://github.com/joshmeranda/fan.git            https://github.com/joshmeranda/fan.git            ",
 			b"joshmeranda/mytools                                                                                                                    ",
 			b"joshmeranda/wrash                  https://github.com/joshmeranda/wrash.git                                                            \n",
-		]) == proc.stdout
+		])
