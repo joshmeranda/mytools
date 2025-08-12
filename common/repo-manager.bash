@@ -41,10 +41,10 @@ for_each_repo() {
 	done
 }
 
-# todo: support setting upstream (probably url only)
 clone() {
 	local https
 	local ssh
+	local upstream
 
 	case "$DEFAULT_CLONE_PROTO" in
 		https )
@@ -79,13 +79,23 @@ clone() {
 				shift
 				;;
 
+			--upstream | -u )
+				upstream="$2"
+
+				shift
+				shift
+				;;
+
 			--help | -h )
 				echo "$(basename $0) [-h] clone <url> | <owner> <repo>
 
 Clone a github repo. The repo will be cloned into the REPO_ROOT directory at the path <owner>/<repo>.
 
 Args:
-	--help, -h  Show this help text.
+	--help, -h            Show this help text.
+	--upstream, -u <url>  Create an additional remote named "upstream" pointing to the given url.
+	--ssh                 Clone using ssh (only useful when cloning with owner / repo pair)
+	--https               Clone using https (only useful when cloning with owner / repo pair)
 				"
 				exit
 				;;
@@ -142,6 +152,10 @@ Args:
 	local clone_dir="$REPO_ROOT/$owner/$repo"
 
 	git clone "$clone_url" "$clone_dir"
+
+	if [ -n "$upstream" ]; then
+		git -C "$clone_dir" remote add upstream "$upstream"
+	fi
 }
 
 clean() {

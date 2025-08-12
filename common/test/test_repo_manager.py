@@ -184,7 +184,7 @@ class TestRepoManagerClone:
 		assert proc.returncode == 0
 		_assert_repo(tmp_path / "joshmeranda" / "mytools", expected_remotes={"origin": "https://github.com/joshmeranda/mytools.git"})
 
-	def test_with_bad_scheme(self, tmp_path: pathlib.Path):
+	def test_with_bad_url(self, tmp_path: pathlib.Path):
 		proc = subprocess.run(
 			args=[_REPO_MANAGER_PATH, "clone", "https://gitub.com/joshmeranda/mytools"],
 			env={
@@ -197,6 +197,22 @@ class TestRepoManagerClone:
 		assert proc.returncode != 0
 		assert proc.stdout == b"could not detect owner and repo from url\n"
 		assert not (tmp_path / "joshmeranda" / "mytools").exists()
+
+	def test_with_upstream(sefl, tmp_path: pathlib.Path):
+		proc = subprocess.run(
+			args=[_REPO_MANAGER_PATH, "clone", "--upstream", "https://github.com/joshmeranda/mytools.git", "https://github.com/joshmeranda/mytools.git"],
+			env={
+				_ENV_REPO_ROOT: tmp_path,
+			},
+			capture_output=True,
+			timeout=_REPO_MANAGER_TIMEOUT,
+		)
+
+		assert proc.returncode == 0
+		_assert_repo(tmp_path / "joshmeranda" / "mytools", expected_remotes={
+			"origin": "https://github.com/joshmeranda/mytools.git",
+			"upstream": "https://github.com/joshmeranda/mytools.git",
+			})
 
 
 def _clone_repos(tmp_path_factory: pytest.TempPathFactory) -> list[pathlib.Path]:
