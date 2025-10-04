@@ -57,15 +57,15 @@ for html_url in $pr_html_urls; do
 	fi
 done
 
-printf '┌%s┐\n' $(printf '─%.0s' $(seq 0 $(( ($max_html_url_length + 2) + (7 + 2) + (6 + 2) + 1)) ))
+printf '┌%s┬%s┬%s┐\n' $(printf '─%.0s' $(seq 1 $(( $max_html_url_length + 2 )) )) $(printf '─%.0s' {0..8}) $(printf '─%.0s' {0..7})
 printf "│ %+${max_html_url_length}s │ %s │ %s │\n" 'pull request' reviews checks
-printf '├%s┼%s┼%s┤\n' $(printf '─%.0s' $(seq 0 $(( $max_html_url_length + 1 )) )) $(printf '─%.0s' {0..8}) $(printf '─%.0s' {0..7})
+printf '├%s┼%s┼%s┤\n' $(printf '─%.0s' $(seq 1 $(( $max_html_url_length + 2 )) )) $(printf '─%.0s' {0..8}) $(printf '─%.0s' {0..7})
 
 for api_url in $pr_api_urls; do
 	check_pr $api_url &
 done
 wait
 
-printf '└%s┘\n' $(printf '─%.0s' $(seq 0 $(( ($max_html_url_length + 2) + (7 + 2) + (6 + 2) + 1)) ))
+printf '└%s┴%s┴%s┘\n' $(printf '─%.0s' $(seq 1 $(( $max_html_url_length + 2 )) )) $(printf '─%.0s' {0..8}) $(printf '─%.0s' {0..7})
 
 # │ ├ ─ ┼ ┤ ┌ ┐ └ ┘ ┴ ┬
