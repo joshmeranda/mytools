@@ -40,6 +40,10 @@ if [ -n "$DEBUG" ]; then
 
 	# Need to unset this to avoid unwanted output from gh
 	DEBUG=''
+
+	if [ -n "$GH_DEBUG" ]; then
+		DEBUG=$GH_DEBUG
+	fi
 fi
 
 pr_urls=$(gh api --method GET search/issues --paginate --slurp \
