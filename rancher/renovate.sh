@@ -25,7 +25,7 @@ check_pr() {
 }
 
 DAY_RANGE=${DAY_RANGE:-7}
-REPOS=${REPOS:-"rancher/steve rancher/wrangler rancher/norman"}
+REPOS=${REPOS:-"rancher/steve rancher/wrangler rancher/norman rancher/remotedialer rancher/remotedialer-proxy"}
 
 query="created:>=$(date --date "$DAY_RANGE days ago" +%Y-%m-%d) is:pr state:open author:app/renovate-rancher"
 
