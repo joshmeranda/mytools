@@ -9,13 +9,25 @@ check_pr() {
 	approved=$(grep APPROVED <<< "$reviews" | wc --lines)
 	changes_requested=$(grep CHANGES_REQUESTED <<< "$reviews" | wc --lines)
 
-	printf "│ %+${max_html_url_length}s │ %2d✔ %2d✖ │\n" $(jq --raw-output .html_url <<< $pr) ${approved:-0} ${changes_requested:-0}
+	case "$(gh api "$(jq --raw-output .base.repo.url <<< $pr)/commits/$(jq --raw-output .head.sha <<< $pr)/check-suites" -q '.check_suites[] | .conclusion')" in
+		*failure* )
+			check_conclusion="\033[0;31m✖\033[0;3m"
+			;;
+		*success* )
+			check_conclusion="\033[0;32m✔\033[0;3m"
+			;;
+		* )
+			check_conclusion="\033[0;33m↻\033[0;3m"
+			;;
+	esac
+
+	printf "│ %+${max_html_url_length}s │ %2d\033[0;32m✔\033[0;3m %2d\033[0;31m✖\033[0;3m │      $check_conclusion │\n" $(jq --raw-output .html_url <<< $pr) ${approved:-0} ${changes_requested:-0}
 }
 
 DAY_RANGE=${DAY_RANGE:-7}
 REPOS=${REPOS:-"rancher/steve rancher/wrangler rancher/norman"}
 
-query="created:>=$(date --date "$DAY_RANGE days ago" +%Y-%m-%d) is:pr state:open author:app/renovate-rancher" # repo:rancher/steve repo:rancher/wrangler repo:rancher/norman"
+query="created:>=$(date --date "$DAY_RANGE days ago" +%Y-%m-%d) is:pr state:open author:app/renovate-rancher"
 
 for repo in $REPOS; do
 	query="$query repo:$repo"
@@ -45,15 +57,15 @@ for html_url in $pr_html_urls; do
 	fi
 done
 
-printf '┌%s┐\n' $(printf '─%.0s' $(seq 0 $(( $max_html_url_length + 2 + 7 + 2 )) ))
-printf "│ %+${max_html_url_length}s │ %+7s │\n" 'pull request' reviews
-printf '├%s┼%s┤\n' $(printf '─%.0s' $(seq 0 $(( $max_html_url_length + 1 )) )) $(printf '─%.0s' {0..8})
+printf '┌%s┐\n' $(printf '─%.0s' $(seq 0 $(( ($max_html_url_length + 2) + (7 + 2) + (6 + 2) + 1)) ))
+printf "│ %+${max_html_url_length}s │ %s │ %s │\n" 'pull request' reviews checks
+printf '├%s┼%s┼%s┤\n' $(printf '─%.0s' $(seq 0 $(( $max_html_url_length + 1 )) )) $(printf '─%.0s' {0..8}) $(printf '─%.0s' {0..7})
 
 for api_url in $pr_api_urls; do
 	check_pr $api_url &
 done
 wait
 
-printf '└%s┘\n' $(printf '─%.0s' $(seq 0 $(( $max_html_url_length + 2 + 7 + 2 )) ))
+printf '└%s┘\n' $(printf '─%.0s' $(seq 0 $(( ($max_html_url_length + 2) + (7 + 2) + (6 + 2) + 1)) ))
 
-# │ ├ ─ ┼ ┤ ┌ ┐ └ ┘
+# │ ├ ─ ┼ ┤ ┌ ┐ └ ┘ ┴ ┬
