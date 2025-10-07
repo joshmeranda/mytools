@@ -175,8 +175,6 @@ class TestIgnoreTarget:
 
 def _has_newer_than(path: pathlib.Path, old: float) -> bool:
 	for i in path.iterdir():
-		print(i)
-
 		if i.stat().st_mtime > old:
 			return True
 
@@ -204,27 +202,28 @@ class TestIgnoreUpdate:
 		repo_path = tmp_path / "gitignore"
 		_setup_repo(repo_path, back_n_commits=5)
 
-		now = (datetime.datetime.now() + datetime.timedelta(days=1)).timestamp()
+		now = datetime.datetime.now().timestamp()
 
 		proc = subprocess.run(
 			args=[_IGNORE_PATH, "update"],
 			env={
 				_ENV_GITIGNORE_REPO_ROOT: str(tmp_path),
 			},
-			capture_output=True,
+			# capture_output=True,
 			timeout=_IGNORE_TIMEOUT,
 		)
 
 		assert proc.returncode == 0
 		assert repo_path.exists()
-		assert _has_newer_than(repo_path, now)
+		# assert _has_newer_than(repo_path, now)
+		assert _has_newer_than(tmp_path / "gitignore", now)
 
 	def test_existing_repo_up_to_date(self, tmp_path: pathlib.Path):
 		repo_path = tmp_path / "gitignore"
 		_setup_repo(repo_path)
 
 
-		now = datetime.now().timestamp()
+		now = datetime.datetime.now().timestamp()
 
 		proc = subprocess.run(
 			args=[_IGNORE_PATH, "update"],
@@ -237,4 +236,5 @@ class TestIgnoreUpdate:
 
 		assert proc.returncode == 0
 		assert (tmp_path / "gitignore").exists()
-		assert not self.__has_newer_than(repo_path, now)
+		assert not _has_newer_than(repo_path, now)
+2
