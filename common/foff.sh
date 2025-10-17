@@ -52,7 +52,11 @@ while [ "$#" -gt 0 ]; do
 	shift
 done
 
-processes="$(pgrep --full --list-full "$pattern" | grep --invert-match "$0")"
+processes="$(pgrep --full --list-full "$pattern")"
+rm_processes=$(pstree -p $PPID | grep -o '([0-9]\+)' | grep -o '[0-9]\+')
+for i in $rm_processes; do
+	processes="$(echo "$processes" | grep --invert-match $i)"
+done
 
 if [ -z "$processes" ]; then
 	echo 'Error: no processes found, there is nothing to do'
@@ -81,9 +85,10 @@ done
 processes="$(echo "$processes" | cut --delimiter ' ' --fields 1)"
 
 # shellcheck disable=SC2086
-printf 'killing processesw %s' "$processes"
+printf 'killing processes: %s\n' "$processes"
 
 # shellcheck disable=SC2086
 kill $kill_flags $processes
+
 
 printf done
