@@ -1,0 +1,33 @@
+name: Run Tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+  
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python 3.12.3
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.12.3
+
+      - name: Install Script Dependencies
+        run: |
+          sudo apt install git make wget
+          wget https://github.com/jqlang/jq/releases/download/jq-1.6/jq-linux64 && chmod +x jq-linux64 && sudo mv jq-linux64 /usr/bin/jq
+
+      - name: Setup Environment
+        run: pip install --requirement requirements.txt
+      
+      - name: Run Pytest
+        run: pytest .
