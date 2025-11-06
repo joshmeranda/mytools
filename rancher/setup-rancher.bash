@@ -5,7 +5,7 @@
 
 rancher_run_mode=binary
 
-helm_values_flags='--set bootstrapPassword=password12345 --set hostname=rancher.local.com --set rancherImage=joshmeranda/rancher --set rancherImageTag=dev-head'
+helm_values_flags='--set bootstrapPassword=password12345 --set hostname=rancher.local.com --set rancherImage=joshmeranda/rancher --set rancherImageTag=dev'
 
 cluster_prefix=rancher
 
