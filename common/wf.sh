@@ -2,17 +2,16 @@
 
 # todo: support inverting the condition or provide more condition options
 
-usage="Usage: $(basename "$0") [-hq] [-m <max-attempts>] [-i <interval>]
-																		 [-o <never|last|last-err|all>] <args>...
+usage="Usage: $(basename "$0") [-hq] [-m <max-attempts>] [-i <interval>] [-o <never|last|last-err|all>] <args>...
 
 opts:
 	-m <max-attempts>     maximum count amount [inf]
 	-i <interval>         the interval between attempts [1]
 	-o <never|last|all>   control whether out output to the given command is
-												displayed never, only the last attempt, or all attempts
-												[last]
+						  displayed never, only the last attempt, or all attempts
+						  [last]
 	-p                    print a '.' each time the command is tried and whether
-												the command succeeded or failed on the last attempt
+						  the command succeeded or failed on the last attempt
 "
 
 if [ "$#" -eq 0 ]; then

@@ -6,7 +6,7 @@ opts:
 	-h          show this help text
 	-f          do not as for confirmation from user before killing processes
 	-s          the signal to send to the found processes instead of SIGTERM you
-							can get a list of supported signals with 'kill -l'
+				can get a list of supported signals with 'kill -l'
 "
 
 if [ "$#" -lt 0 ]; then
