@@ -1,6 +1,10 @@
 #!/usr/bin/bash
 
 CACHE_DIR=${CACHE_DIR:="$HOME/.cache/url-diff"}
+REQUEST_TIMEOUT=${REQUEST_TIMEOUT:=2}
+
+# wget_global_options="--timeout=$REQUEST_TIMEOUT --output-file=/dev/null"
+wget_global_options="--timeout=$REQUEST_TIMEOUT"
 
 # cache_add will check for an existing cache entry, and if none exists create a
 # new one. Each entry is a directory containing the cached data and a file will
@@ -9,17 +13,8 @@ cache_add() {
 	while [ $# -gt 0 ]; do
 		case "$1" in
 			-h | --help )
-				echo "Usage: $(basename $0) add <url>
-
-Add a url to the cache
-
-Options:
-  -w, --wget <opts>  Pass additional flags to wget as a single string literal."
-					  exit
-				;;
-			-w | --wget )
-				wget_opts="$2"
-				shift
+				echo "Usage: $(basename $0) add <url> [wget-flags]"
+				exit
 				;;
 			* )
 				break
@@ -29,6 +24,9 @@ Options:
 	done
 
 	local url="$1"
+
+	shift
+	local wget_opts="$*"
 
 	if [ -z "$url" ]; then
 		echo "Error: expected url but found none"
@@ -48,7 +46,11 @@ Options:
 		echo "$wget_opts" > $cache_path/wget
 	fi
 
-	wget $wget_opts -o "$cache_path/data" $url
+	if ! wget $wget_global_options $wget_opts --output-document "$cache_path/data" $url; then
+		rm --recursive --force "$cache_path"
+		echo "Error: failed to fetch from url '$url'"
+		exit 1
+	fi
 }
 
 cache_remove() {
@@ -116,12 +118,16 @@ Check a url against a stored cache."
 		wget_opts="$(cat "$cache_path/wget")"	
 	fi
 
-	wget $wget_opts -o "$cache_path/data.tmp" "$url"
+	wget $wget_global_options $wget_opts --output-document "$cache_path/data.tmp" "$url"
 
 	diff "$cache_path/data" "$cache_path/data.tmp"
 
 	rm "$cache_path/data.tmp"
 }
+
+if [ $# -eq 0 ]; then
+	echo "Error: expected args but foudn none"
+fi
 
 while [ $# -gt 0 ]; do
 	case "$1" in
@@ -138,7 +144,9 @@ Opts:
   -h, --help  Show this help text
 
 EnvVars:
-  CACHE_DIR   The directory to look at for cache operations."
+  CACHE_DIR        The directory to look at for cache operations. [$CACHE_DIR]
+  REQUEST_TIMEOUT  The '--timeout-- value to pass to wget. [$REQUEST_TIMEOUT]
+"
 			break
 			;;
 
