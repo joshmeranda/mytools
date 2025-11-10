@@ -87,7 +87,7 @@ Remove a url form the cache. If the url is not in the cache, script will exit wi
 }
 
 cache_list() {
-	find "$CACHE_DIR" -mindepth 1 -maxdepth 1 -type d -exec basename '{}' +  | base64 --decode | sort
+	find "$CACHE_DIR" -mindepth 1 -maxdepth 1 -type d -exec basename '{}' \; | base64 --decode | sort
 }
 
 cache_check() {
