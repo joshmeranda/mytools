@@ -114,6 +114,18 @@ def server(setup_server: tuple[str, str]) -> tuple[str, str]:
 	raise Exception("could not contact server in time")
 
 
+@pytest.fixture(scope="function")
+def cache_path(server: tuple[str, str], tmp_path: pathlib.Path) -> pathlib.Path:
+	url = f'http://{server[0]}:{server[1]}/static'
+	url64 = _url_base64[url]
+
+	(tmp_path / url64).mkdir()
+	(tmp_path / url64 / "data").open("w").write("static")
+	(tmp_path / url64 / "wget").open("w").write("--quiet")
+
+	return tmp_path
+
+
 class TestUrlDiffAdd:
 	def test_add_new(self, tmp_path: pathlib.Path, server: tuple[str, int]):
 		url = f'http://{server[0]}:{server[1]}/static'
@@ -216,7 +228,51 @@ class TestUrlDiffAdd:
 
 
 class TestUrlDiffRemove:
-	pass
+	def test_remove_existing(self, cache_path: pathlib.Path, server: tuple[str, int]):
+		url = f'http://{server[0]}:{server[1]}/static'
+		url64 = _url_base64[url]
+
+		proc = subprocess.run(
+			args=[_URL_DIFF_PATH, "remove", url],
+			env={
+				_ENV_URL_DIFF_CACHE_DIR: str(cache_path),
+			},
+			capture_output=True,
+			timeout=_URL_DIFF_TIMEOUT,
+		)
+
+		assert proc.returncode == 0
+		assert not (cache_path / url64).exists()
+		assert not (cache_path / url64 / "data").exists()
+
+	def test_remove_non_existing(self, cache_path: pathlib.Path, server: tuple[str, str]):
+		url64 = _url_base64[_bad_url_example]
+
+		proc = subprocess.run(
+			args=[_URL_DIFF_PATH, "remove", _bad_url_example],
+			env={
+				_ENV_URL_DIFF_CACHE_DIR: str(cache_path),
+			},
+			capture_output=True,
+			timeout=_URL_DIFF_TIMEOUT,
+		)
+
+		assert proc.returncode == 1
+		assert not (cache_path / url64).exists()
+		assert not (cache_path / url64 / "data").exists()
+
+	def test_remove_with_no_url(self):
+		proc = subprocess.run(
+			args=[_URL_DIFF_PATH, "remove"],
+			env={
+				_ENV_URL_DIFF_CACHE_DIR: str(cache_path),
+			},
+			capture_output=True,
+			timeout=_URL_DIFF_TIMEOUT,
+		)
+
+		assert proc.returncode == 1
+		assert proc.stdout == "Error: expected url but found none\n".encode()
 
 
 class TestUrlDiffList:
