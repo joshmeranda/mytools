@@ -209,7 +209,7 @@ class TestIgnoreUpdate:
 			env={
 				_ENV_GITIGNORE_REPO_ROOT: str(tmp_path),
 			},
-			# capture_output=True,
+			capture_output=True,
 			timeout=_IGNORE_TIMEOUT,
 		)
 
@@ -237,4 +237,3 @@ class TestIgnoreUpdate:
 		assert proc.returncode == 0
 		assert (tmp_path / "gitignore").exists()
 		assert not _has_newer_than(repo_path, now)
-2
