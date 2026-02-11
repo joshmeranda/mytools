@@ -5,7 +5,7 @@
 
 rancher_run_mode=binary
 
-helm_values_flags='--set bootstrapPassword=password12345 --set hostname=suse.rancher.local.com --set rancherImage=joshmeranda/rancher --set rancherImageTag=dev'
+helm_values_flags='--set bootstrapPassword=password12345 --set hostname=suse.rancher.local.com'
 
 cluster_prefix=rancher
 
@@ -42,6 +42,16 @@ while [[ $# -gt 0 ]]; do
 			fi
 
 			rancher_chart="$2"
+			shift
+			;;
+
+		--image | -i )
+			if [ $# -lt 2 ]; then
+				echo "expected value after '$1' but found none"
+				exit 1
+			fi
+
+			rancher_image="$2"
 			shift
 			;;
 
@@ -84,7 +94,7 @@ while [[ $# -gt 0 ]]; do
 			shift
 			;;
 
-		--image | -i )
+		--k3s-image )
 			if [ $# -lt 2 ]; then
 				echo "expected value after '$1' but found none"
 				exit 1
@@ -104,11 +114,12 @@ while [[ $# -gt 0 ]]; do
 Args
   --mode, -m <str>     The mode rancher is expected to be run as. Can be one of chart, docker, or binary. [$rancher_run_mode]
   --chart, -c <ref>    The reference to the chart to install when mode == \'chart\', see https://v2.helm.sh/docs/helm/#helm-install for more information on chart references
+  --image, -i <image>  Specify a non-deafult image to use when installing Rancher in the format '<repo>:<tag>'
   --set, -s <str>      See https://helm.sh/docs/helm/helm_upgrade for more information on the format for --set
   --unset, -u          Unset any pre-set values passed to the chart when installing rancher (previous '--set' will be ignored and future '--set' will be respected)
   --prefix, -p <str>   The prefix to use when generating cluster names. [$cluster_prefix]
   --agents, -a  <int>  Specify how many rancher agent clusters to start [$agents]
-  --image, -i <image>  The image to use when creating clusters, if not specified the default k3d vlaue is used
+  --k3s-image <image>  The image to use when creating clusters, if not specified the default k3d vlaue is used
   --k9s, -k            Open k9s to follow the new cluster [$k9s]
   --help, -h           Show this help text"
 			exit
@@ -122,6 +133,14 @@ Args
 
 	shift
 done
+
+# These mut be applied afterward to respect --image regardless of the ordering with --unset.
+if [ -n "$rancher_image" ]; then
+	repo=$(cut -d : -f 1 <<< $rancher_image)
+	tag=$(cut -d : -f 2 <<< $rancher_image)
+
+	helm_values_flags="$helm_values_flags --set rancherImage=$repo --set rancherImageTag=$tag"
+fi
 
 echo "Cluster Prefix : $cluster_prefix"
 echo "Agent Clusters : $agents"
