@@ -143,7 +143,7 @@ if [ -n "$rancher_image" ]; then
 fi
 
 if [ -n "$set_flags" ]; then
-	helm_values_flags="$helm_values_flags $set_flags"
+	helm_values_flags="$helm_values_flags$set_flags"
 fi
 
 echo "Cluster Prefix : $cluster_prefix"
