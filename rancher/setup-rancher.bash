@@ -61,7 +61,7 @@ while [[ $# -gt 0 ]]; do
 				exit 1
 			fi
 
-			helm_values_flags="$helm_values_flags --set $2"
+			set_flags="$set_flags --set $2"
 			shift
 			;;
 
@@ -116,7 +116,7 @@ Args
   --chart, -c <ref>    The reference to the chart to install when mode == \'chart\', see https://v2.helm.sh/docs/helm/#helm-install for more information on chart references
   --image, -i <image>  Specify a non-deafult image to use when installing Rancher in the format '<repo>:<tag>'
   --set, -s <str>      See https://helm.sh/docs/helm/helm_upgrade for more information on the format for --set
-  --unset, -u          Unset any pre-set values passed to the chart when installing rancher (previous '--set' will be ignored and future '--set' will be respected)
+  --unset, -u          Unset any pre-set values passed to the chart when installing rancher (any values passed to '--set' will be respected)
   --prefix, -p <str>   The prefix to use when generating cluster names. [$cluster_prefix]
   --agents, -a  <int>  Specify how many rancher agent clusters to start [$agents]
   --k3s-image <image>  The image to use when creating clusters, if not specified the default k3d vlaue is used
@@ -140,6 +140,10 @@ if [ -n "$rancher_image" ]; then
 	tag=$(cut -d : -f 2 <<< $rancher_image)
 
 	helm_values_flags="$helm_values_flags --set rancherImage=$repo --set rancherImageTag=$tag"
+fi
+
+if [ -n "$set_flags" ]; then
+	helm_values_flags="$helm_values_flags $set_flags"
 fi
 
 echo "Cluster Prefix : $cluster_prefix"
