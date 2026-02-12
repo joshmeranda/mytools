@@ -118,7 +118,7 @@ Args
   --set, -s <str>      See https://helm.sh/docs/helm/helm_upgrade for more information on the format for --set
   --unset, -u          Unset any pre-set values passed to the chart when installing rancher (any values passed to '--set' will be respected)
   --prefix, -p <str>   The prefix to use when generating cluster names. [$cluster_prefix]
-  --agents, -a  <int>  Specify how many rancher agent clusters to start [$agents]
+  --agents, -a  <int>  Specify how many rancher agent clusters to start, kubeconfigs will be generated in the current directory following the pattern '$cluster_prefix-agent-<n>' [$agents]
   --k3s-image <image>  The image to use when creating clusters, if not specified the default k3d vlaue is used
   --k9s, -k            Open k9s to follow the new cluster [$k9s]
   --help, -h           Show this help text"
