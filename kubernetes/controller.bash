@@ -78,9 +78,6 @@ while [ "$#" -gt 0 ]; do
 	shift
 done
 
-echo $callback $kind $name
-echo $flags
-
 if [ -z "$callback" ]; then
 	echo 'expected at least 1 argument but found none'
 	exit 1
@@ -89,8 +86,11 @@ elif [ -z "$kind" ]; then
 	exit 1
 fi
 
-echo kubectl get --watch-only --output jsonpath='{@}{"\n"}' $flags "$kind" "$name"
+lock_file=.lock
+
+trap "rm --force $lock_file" EXIT
+
 kubectl get --watch-only --output jsonpath='{@}{"\n"}' $flags $kind $name |
 while IFS= read -r obj; do
-	$callback "$obj"
+	flock .lock $callback "$obj"
 done
