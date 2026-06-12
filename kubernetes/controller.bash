@@ -90,7 +90,7 @@ lock_file=.lock
 
 trap "rm --force $lock_file" EXIT
 
-kubectl get --watch-only --output jsonpath='{@}{"\n"}' $flags $kind $name |
+kubectl get --watch --output jsonpath='{@}{"\n"}' $flags $kind $name |
 while IFS= read -r obj; do
 	flock .lock $callback "$obj"
 done

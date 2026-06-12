@@ -237,4 +237,3 @@ class TestIgnoreUpdate:
 		assert proc.returncode == 0
 		assert (tmp_path / "gitignore").exists()
 		assert not _has_newer_than(repo_path, now)
-2
