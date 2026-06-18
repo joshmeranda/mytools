@@ -86,11 +86,11 @@ elif [ -z "$kind" ]; then
 	exit 1
 fi
 
-lock_file=.lock
+lock_file=.lock-$BASHPID
 
 trap "rm --force $lock_file" EXIT
 
 kubectl get --watch --output jsonpath='{@}{"\n"}' $flags $kind $name |
 while IFS= read -r obj; do
-	flock .lock $callback "$obj"
+	flock $lock_file $callback "$obj" &
 done
