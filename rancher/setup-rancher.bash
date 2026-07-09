@@ -5,7 +5,8 @@
 
 rancher_run_mode=binary
 
-helm_values_flags='--set bootstrapPassword=password12345 --set hostname=suse.rancher.local.com'
+# todo: we should attempt to get the hostname from the system
+helm_values_flags='--set bootstrapPassword=password12345 --set hostname=rancher.local.com'
 
 cluster_prefix=rancher
 
