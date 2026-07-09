@@ -5,8 +5,11 @@
 
 rancher_run_mode=binary
 
-# todo: we should attempt to get the hostname from the system
-helm_values_flags='--set bootstrapPassword=password12345 --set hostname=rancher.local.com'
+helm_values_flags='--set bootstrapPassword=password12345'
+
+if [ -n "$(hostname)" ]; then
+	helm_values_flags+=" --set hostname=$(hostname)"
+fi
 
 cluster_prefix=rancher
 
