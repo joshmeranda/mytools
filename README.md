@@ -11,7 +11,7 @@ For most of these tools I try to stick to pure bash and coreutils, but sometimes
 | Name | Version | Links |
 | ---- | ------- | ----- |
 | git  | 2.34.1  | https://git-scm.com/downloads/linux |
-| jq   | 1.6     | https://github.com/jqlang/jq?tab=readme-ov-file#installation |
+| jq   | 1.8     | https://github.com/jqlang/jq?tab=readme-ov-file#installation |
 
 Versions are what I have used during developed. Other versions may works as well, but have not been tested.
 
