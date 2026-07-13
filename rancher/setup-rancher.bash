@@ -212,7 +212,7 @@ case "$rancher_run_mode" in
 		helm upgrade --install --create-namespace --namespace cert-manager --set crds.enabled=true cert-manager jetstack/cert-manager
 
 		if [ -n "$rancher_chart" ]; then
-			helm upgrade --install --create-namespace --namespace cattle-system rancher "$rancher_chart" $helm_values_flags
+			helm upgrade --devel --install --create-namespace --namespace cattle-system rancher "$rancher_chart" $helm_values_flags
 		fi
 		;;
 	docker | binary)
