@@ -1,10 +1,35 @@
 #!/usr/bin/bash
 
-usage="Usage: $0 SIZE
+usage="Usage: $(basename $0) SIZE
 
-Size is the amount of space you want docker to use. Size is expected to be a
+SIZE is the amount of space you want docker to use. Size is expected to be a
 whole number in GB. If the GB unit is ommited, the command will exit with
-non-zero code (ex. 10GB is acceptable but neither 10.1GB or 10 is)."
+non-zero code (ex. 10GB is acceptable but neither 10.1GB or 10 is).
+
+Args:
+  -n, --notify    Rather tha printing message to commaned line send a system
+                  notification instead using notify-send
+  -h, --help      Show this help text"
+
+notify=false
+
+while [ $# -gt 0 ]
+do
+	case $1 in
+		-n | --notify )
+			notify=true
+			;;
+		-h | --help )
+			echo "$usage"
+			exit
+			;;
+		* )
+			break
+			;;
+	esac
+
+	shift
+done
 
 case $# in
 	0 )
@@ -65,7 +90,7 @@ for i in $(docker system df --format '{{.Size}}')
 do
 	size=$(to_B $i)
 	((total_size+=size))
-done 
+done
 
 if [ $total_size -gt $max_size_b ]
 then
@@ -84,5 +109,12 @@ then
 		delta=${delta}B
 	fi
 
-	notify-send "Docker storage maximum ($max_size) exceeded by $delta"
+	message="Docker storage maximum ($max_size) exceeded by $delta"
+fi
+
+if $notify
+then
+	notify-send --urgency=normal "$message"
+else
+	echo $message
 fi
