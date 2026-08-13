@@ -2,14 +2,14 @@
 
 usage="Usage: $(basename $0) SIZE
 
-SIZE is the amount of space you want docker to use. Size is expected to be a
-whole number in GB. If the GB unit is ommited, the command will exit with
-non-zero code (ex. 10GB is acceptable but neither 10.1GB or 10 is).
+SIZE is the amount of space you want docker to use. Size is expected to be a whole number in GB. If the GB unit is
+ommited, the command will exit with non-zero code (ex. 10GB is acceptable but neither 10.1GB or 10 is).
 
 Args:
-  -n, --notify    Rather tha printing message to commaned line send a system
-                  notification instead using notify-send
-  -h, --help      Show this help text"
+  -n, --notify          Rather tha printing message to commaned line send a system notification instead using
+                        notify-send
+  -l, --lock-file FILE  Path to file to limit how often we check docker disk usage
+  -h, --help            Show this help text"
 
 notify=false
 
@@ -18,6 +18,14 @@ do
 	case $1 in
 		-n | --notify )
 			notify=true
+			;;
+		-l | --lock-file )
+			if [ $# -eq 1 ]; then
+				echo "Error: $1 expects a value but none was found"
+			fi
+
+			lock_file=$2
+			shift
 			;;
 		-h | --help )
 			echo "$usage"
@@ -30,6 +38,26 @@ do
 
 	shift
 done
+
+if [ -n "$lock_file" ]
+then
+	next_check=0
+
+	if [ -f "$lock_file" ]
+	then
+		next_check=$(cat "$lock_file")
+	fi
+
+	now=$(date --utc '+%s')
+
+	if [ $now -lt $next_check ]
+	then
+		exit
+	fi
+
+	date --utc --date tomorrow '+%s' > "$lock_file"
+fi
+
 
 case $# in
 	0 )
