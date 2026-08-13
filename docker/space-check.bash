@@ -62,16 +62,20 @@ from_GB_to_B() {
 }
 
 from_MB_to_B() {
-	bc <<< "$1 * B_TO_MB / 1"
+	bc <<< "$1 * $B_TO_MB / 1"
 }
 
 from_KB_to_B() {
-	bc <<< "$1 * B_TO_KB / 1"
+	bc <<< "$1 * $B_TO_KB / 1"
 }
 
 to_B() {
 	size=${1%??}
-	unit=${1: -2}
+
+	# Since we are ignoring case here we are doing a "gainy" transormation
+	# which may lead to false positives on total docker disk usage exceeding
+	# configured maximums.
+	unit=$(echo ${1: -2} | tr '[[:lower:]]' '[[:upper:]]')
 
 	case $unit in
 		GB | MG | KB )
