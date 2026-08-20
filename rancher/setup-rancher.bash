@@ -2,6 +2,11 @@
 # Script for establishing a local rancher setup using k3d as a driver. When creating a server, the file pointed to by
 # your 'KUBECONFIG' envvar will be updated. When creating agents a new KUBECONFIG file will be created with the name
 # ./<cluster name>.yaml.
+#
+# You can add additional setup hooks by adding them to the .rancher-hooks directory where you will run the command. See below for descriptions of the support paths:
+# ┌ .rancher-hooks # scripts which should be run for both the server and agent clusters
+# ├── server       # scripts which should only be run for the server cluster
+# └── agent        # scripts which should only be run for agent clusters
 
 rancher_run_mode=binary
 
@@ -226,8 +231,43 @@ for i in $(seq $agents) ; do
 	create_agent $i
 done
 
-# todo: list only created clusters
 k3d cluster list ${new_clusters[@]}
+
+echo running hooks...
+
+if [ -d .rancher-hooks ]; then
+	pushd .rancher-hooks > /dev/null
+
+	find . -maxdepth 1 -type f -executable -exec ./'{}' \;
+
+	for name in ${new_clusters[@]}; do
+		if [[ $name =~  [a-zA-Z]+-agent-[0-9]+ ]]; then
+			KUBECONFIG=$name.yaml find . -maxdepth 1 -type f -exectuable -exec ./'{}' \;
+		fi
+	done
+
+	popd > /dev/null
+fi
+
+if [ -d .rancher-hooks/server ]; then
+	pushd .rancher-hooks/server > /dev/null
+
+	find . -maxdepth 1 -type f -executable -exec ./'{}' \;
+
+	popd > /dev/null
+fi
+
+if [ -d .rancher/hooks/agent ]; then
+	pushd .rancher-hooks/agent > /dev/null
+
+	for name in ${new_clusters[@]}; do
+		if [[ $name =~  [a-zA-Z]+-agent-[0-9]+ ]]; then
+			KUBECONFIG=$name.yaml find . -maxdepth 1 -type f -exectuable -exec ./'{}' \;
+		fi
+	done
+
+	popd > /dev/null
+fi
 
 if $k9s ; then
 	echo starting k9s...
