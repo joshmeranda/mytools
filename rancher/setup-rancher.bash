@@ -170,6 +170,41 @@ fi
 
 new_clusters=()
 
+hook_dir=.rancher-hooks
+
+run_hooks() {
+	name="$1"
+	kubeconfig="$(realpath "$2")"
+	additional_hook_dir="$hook_dir/$3"
+
+	echo waiting for cluster $name to be ready...
+
+	until KUBECONFIG="$kubeconfig" kubectl cluster-info &> /dev/null; do
+		sleep 1
+	done
+
+	if [ ! -d "$hook_dir" ]; then
+		echo skipping hooks
+		return
+	fi
+
+	echo running hooks for $name...
+
+	pushd "$hook_dir" > /dev/null
+	KUBECONFIG="$kubeconfig" find . -maxdepth 1 -type f -executable -exec ./'{}' \;
+	popd > /dev/null
+
+	if [ ! -d "$additional_hook_dir" ]; then
+		return
+	fi
+
+	echo running additional hooks in $additional_hook_dir for $name...
+
+	pushd "$additional_hook_dir" > /dev/null
+	KUBECONFIG="$kubeconfig" find . -maxdepth 1 -type f -executable -exec ./'{}' \;
+	popd > /dev/null
+}
+
 create_server() {
 	if [ "$rancher_run_mode" == "chart" ] ; then
 		local args='--port 80:80@loadbalancer --port 443:443@loadbalancer'
@@ -202,6 +237,8 @@ create_agent() {
 	KUBECONFIG=$name.yaml kubectl config set-context --current --namespace cattle-system
 
 	new_clusters+=($name)
+
+	run_hooks $name $name.yaml agent
 }
 
 if k3d cluster get "$cluster_prefix-server" &>/dev/null; then
@@ -229,47 +266,13 @@ case "$rancher_run_mode" in
 		;;
 esac
 
+run_hooks $cluster_prefix-server "$KUBECONFIG" server
+
 for i in $(seq $agents) ; do
 	create_agent $i
 done
 
 k3d cluster list ${new_clusters[@]}
-
-echo running hooks...
-
-if [ -d .rancher-hooks ]; then
-	pushd .rancher-hooks > /dev/null
-
-	find . -maxdepth 1 -type f -executable -exec ./'{}' \;
-
-	for name in ${new_clusters[@]}; do
-		if [[ $name =~  [a-zA-Z]+-agent-[0-9]+ ]]; then
-			KUBECONFIG=$name.yaml find . -maxdepth 1 -type f -exectuable -exec ./'{}' \;
-		fi
-	done
-
-	popd > /dev/null
-fi
-
-if [ -d .rancher-hooks/server ]; then
-	pushd .rancher-hooks/server > /dev/null
-
-	find . -maxdepth 1 -type f -executable -exec ./'{}' \;
-
-	popd > /dev/null
-fi
-
-if [ -d .rancher/hooks/agent ]; then
-	pushd .rancher-hooks/agent > /dev/null
-
-	for name in ${new_clusters[@]}; do
-		if [[ $name =~  [a-zA-Z]+-agent-[0-9]+ ]]; then
-			KUBECONFIG=$name.yaml find . -maxdepth 1 -type f -exectuable -exec ./'{}' \;
-		fi
-	done
-
-	popd > /dev/null
-fi
 
 if $k9s ; then
 	echo starting k9s...
