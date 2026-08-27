@@ -148,6 +148,8 @@ if [ -n "$rancher_image" ]; then
 	repo=$(cut -d : -f 1 <<< $rancher_image)
 	tag=$(cut -d : -f 2 <<< $rancher_image)
 
+	# Eventually we will need to update this to use image.repository and image.tag instead, but for now this supports
+	# more versions of the rancher chart.
 	helm_values_flags="$helm_values_flags --set rancherImage=$repo --set rancherImageTag=$tag"
 fi
 
