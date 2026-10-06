@@ -20,6 +20,7 @@ cluster_prefix=rancher
 
 agents=0
 
+no_hooks=false
 k9s=false
 
 while [[ $# -gt 0 ]]; do
@@ -113,6 +114,10 @@ while [[ $# -gt 0 ]]; do
 			shift
 			;;
 
+		--no-hooks )
+			no_hooks=true
+			;;
+
 		--k9s | -k )
 			k9s=true
 			;;
@@ -129,6 +134,7 @@ Args
   --prefix, -p <str>   The prefix to use when generating cluster names. [$cluster_prefix]
   --agents, -a  <int>  Specify how many rancher agent clusters to start, kubeconfigs will be generated in the current directory following the pattern '$cluster_prefix-agent-<n>.yaml' [$agents]
   --k3s-image <image>  The image to use when creating clusters, if not specified the default k3d vlaue is used
+  --no-hooks           Do not run the hooks in .rancher-hooks
   --k9s, -k            Open k9s to follow the new cluster [$k9s]
   --help, -h           Show this help text"
 			exit
@@ -266,7 +272,9 @@ case "$rancher_run_mode" in
 		;;
 esac
 
-run_hooks $cluster_prefix-server "$KUBECONFIG" server
+if ! $no_hooks; then
+	run_hooks $cluster_prefix-server "$KUBECONFIG" server
+fi
 
 for i in $(seq $agents) ; do
 	create_agent $i
