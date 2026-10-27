@@ -10,6 +10,33 @@ Commands:
 "
 }
 
+# Utility function to simplify running operations on each release branch. Expects $1 to be a command to call with the name of the release branch as an argument.
+for_each_release_branch() {
+	if [ ! -f VERSION.md ]
+	then
+		echo 'Error: No such file VERSION.md found'
+		exit 1
+	fi
+
+	for branch in $(cat VERSION.md | grep '|' | cut --delimiter '|' --fields 2 | tail +3)
+	do
+		$1 $branch
+	done
+}
+
+display_branch_tag() {
+	local branch=$1
+
+	if git show-ref --quiet "refs/heads/$branch"
+	then
+		local tag=$(git describe --tags --abbrev=0 --always $branch)
+	else
+		local tag='branch not locally found'
+	fi
+
+	printf '%-15s%s\n' $branch "$tag"
+}
+
 tags() {
 	while [ $# -gt 0 ]
 	do
@@ -45,17 +72,7 @@ tags() {
 	fi
 
 	printf '%-15s%s\n' BRANCH 'CURRENT TAG'
-	for branch in $(cat VERSION.md | grep '|' | cut --delimiter '|' --fields 2 | tail +3)
-	do
-		if git show-ref --quiet "refs/heads/$branch"
-		then
-			local tag=$(git describe --tags --abbrev=0 --always $branch)
-		else
-			local tag='branch not locally found'
-		fi
-
-		printf '%-15s%s\n' $branch "$tag"
-	done
+	for_each_release_branch display_branch_tag
 
 	if [ -n "$repo_dir" ]
 	then
