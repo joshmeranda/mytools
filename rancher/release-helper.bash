@@ -4,9 +4,10 @@ usage() {
 	echo "Usage: $(basename $0) <command> [args]
 
 Commands:
-    tags  parse a local VERSION.md for release branches and determine the most recent tags for each branch. All
-          operations are done locally so ensure you have up-to-date local branches and tags (git pull && git fetch
-          --tags).
+	prepare  Prepare the local repository for further release operations by bringing it up to date with upstreams.
+    tags     Parse a local VERSION.md for release branches and determine the most recent tags for each branch. All
+             operations are done locally so ensure you have up-to-date local branches and tags (git pull && git fetch
+             --tags).
 "
 }
 
@@ -18,10 +19,39 @@ for_each_release_branch() {
 		exit 1
 	fi
 
+	local current_branch=$(git rev-parse --abbrev-ref HEAD)
+	if [ "$current_branch" != "main" ]
+	then
+		git switch main &> /dev/null
+	fi
+
 	for branch in $(cat VERSION.md | grep '|' | cut --delimiter '|' --fields 2 | tail +3)
 	do
 		$1 $branch
 	done
+
+	git switch $current_branch &> /dev/null
+}
+
+prepare_branch() {
+	local branch=$1
+
+	git switch $branch &> /dev/null
+	git pull --ff upstream $branch &>/dev/null
+
+	printf 'Prepared release branch %s\n' $branch
+}
+
+prepare() {
+	if [ -n "$(git status --porcelain 2> /dev/null)" ]
+	then
+		echo 'Error: worktree is not clean, you must stage or commit any changes before you can begin'
+		exit 1
+	fi
+
+	for_each_release_branch prepare_branch
+
+	git fetch upstream --tags &> /dev/null
 }
 
 display_branch_tag() {
@@ -65,12 +95,6 @@ tags() {
 		pushd "$repo_dir" &> /dev/null
 	fi
 
-	local current_branch=$(git rev-parse --abbrev-ref HEAD)
-	if [ "$current_branch" != "main" ]
-	then
-		echo "warning: current branch $current_branch != main, results may not be accurate"
-	fi
-
 	printf '%-15s%s\n' BRANCH 'CURRENT TAG'
 	for_each_release_branch display_branch_tag
 
@@ -104,6 +128,9 @@ then
 fi
 
 case "$cmd" in
+	prepare )
+		prepare
+		;;
 	tags )
 		tags $*
 		;;
