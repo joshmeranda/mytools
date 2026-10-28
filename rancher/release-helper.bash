@@ -6,8 +6,7 @@ usage() {
 Commands:
 	prepare  Prepare the local repository for further release operations by bringing it up to date with upstreams.
     tags     Parse a local VERSION.md for release branches and determine the most recent tags for each branch. All
-             operations are done locally so ensure you have up-to-date local branches and tags (git pull && git fetch
-             --tags).
+             operations are done locally so ensure you have up-to-date local branches and tags.
 "
 }
 
@@ -36,6 +35,7 @@ for_each_release_branch() {
 prepare_branch() {
 	local branch=$1
 
+	git fetch upstream $branch &> /dev/null
 	git switch $branch &> /dev/null
 	git pull --ff upstream $branch &>/dev/null
 
